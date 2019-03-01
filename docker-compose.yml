@@ -1,0 +1,50 @@
+version: "3"
+services:
+  db:
+    image: postgres:11.1
+    container_name: docker_db
+    environment:
+      POSTGRES_PASSWORD: postgres
+    networks:
+      - default
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  app:
+    tty: true
+    stdin_open: true
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: docker_app
+    ports:
+      - '3001:3000'
+    environment:
+      POSTGRES_DB: app_development
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      IMAGE_API_KEY: 'xxx'
+      IMAGE_API_SECRET: 'xxx'
+      IMAGE_ENDPOINT: http://localstack:4572
+      IMAGE_BUCKET_NAME: 'image_name'
+    networks:
+      - default
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+      - bundle_install:/app/vendor/bundle
+      - bundle:/app/.bundle
+    command: ["bundle", "exec", "rails", "s", "-b", "0.0.0.0"]
+
+volumes:
+  postgres-data:
+    driver: local
+  bundle_install:
+    driver: local
+  bundle:
+    driver: local
